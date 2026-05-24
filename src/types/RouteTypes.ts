@@ -35,7 +35,7 @@ export class RouteDefinition {
 		name: string | null = null,
 		color: string | null = null,
 		departureTime: number | null = null,
-		defaultSpeed: number = 5
+		defaultSpeed: number = 7.5
 	) {
 		this.id = id || crypto.randomUUID();
 		this._name = name;
@@ -85,7 +85,6 @@ export class RouteDefinition {
 		}
 
 		const isFirstOrLast = index === 0 || index === this._waypoints.length - 1;
-
 		this._waypoints[index] = position;
 		this._clearCache();
 

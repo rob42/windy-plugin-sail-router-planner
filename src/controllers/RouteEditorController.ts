@@ -275,6 +275,9 @@ export class RouteEditorController {
 	}
 
 	onMapClick(position: LatLng): void {
+		// allow for crossing 180deg
+			if(position.lng > 180) position.lng =  position.lng - 360;
+			if(position.lng < -180) position.lng =  position.lng + 360;
 		if (!this._activeRoute) {
 			// Create new route with next color
 			const color = this._getNextAvailableColor();
@@ -359,7 +362,24 @@ export class RouteEditorController {
 		if (waypoints.length >= 2) {
 			// Generate path points that follow great circle routes for long legs
 			const pathPoints = this._generateGreatCirclePath(waypoints);
-
+			//fix the antimeridional, aka 180deg lon
+	
+			for(let x = 1; x < pathPoints.length; x++){
+				//check if it crosses the antimeridion
+				var lon1 = pathPoints[x-1].lng;
+				
+				var lon2 = pathPoints[x].lng;
+				//cross both ways
+				if(lon1>165 && lon2 < -165){
+					//fix 
+					pathPoints[x].lng = pathPoints[x].lng + 360;
+				}
+				if(lon2>165 && lon1 < -165){
+					//fix 
+					pathPoints[x].lng = pathPoints[x].lng - 360;
+				}
+				
+			}
 			// Create invisible thicker line for easier clicking
 			const clickableLine = L.polyline(pathPoints, {
 				color: 'transparent',
@@ -603,6 +623,9 @@ export class RouteEditorController {
 		marker.on('drag', (e: L.DragEvent) => {
 			// Update route line, distance labels, and day markers in real-time during drag
 			const newPosition = (e.target as L.Marker).getLatLng();
+			// allow for crossing 180deg
+			if(newPosition.lng > 180) newPosition.lng =  newPosition.lng - 360;
+			if(newPosition.lng < -180) newPosition.lng = newPosition.lng + 360;
 			route.updateWaypoint(index, newPosition);
 			this._updateRouteLine(route, true);
 			this._updateDistanceLabels(route);
@@ -616,6 +639,9 @@ export class RouteEditorController {
 
 		marker.on('dragend', (e: L.DragEvent) => {
 			const newPosition = (e.target as L.Marker).getLatLng();
+			// allow for crossing 180deg
+			if(newPosition.lng > 180) newPosition.lng =  newPosition.lng - 360;
+			if(newPosition.lng < -180) newPosition.lng =  newPosition.lng + 360;
 			route.updateWaypoint(index, newPosition);
 			this._updateRouteLine(route, true);
 			this._updateDistanceLabels(route);
@@ -693,8 +719,9 @@ export class RouteEditorController {
 		// Calculate the bearing/angle of the line for proper geographic rotation
 		const lat1 = startPoint.lat * Math.PI / 180;
 		const lat2 = endPoint.lat * Math.PI / 180;
-		const deltaLng = (endPoint.lng - startPoint.lng) * Math.PI / 180;
-
+		const deltaLng1 = (endPoint.lng - startPoint.lng) * Math.PI / 180;
+		const deltaLng2 = ((endPoint.lng+180) + (startPoint.lng-180)) * Math.PI / 180;
+		const deltaLng = Math.min(deltaLng1,deltaLng2);
 		const y = Math.sin(deltaLng) * Math.cos(lat2);
 		const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng);
 		let angle = Math.atan2(y, x) * 180 / Math.PI;
@@ -746,7 +773,10 @@ export class RouteEditorController {
 
 		// Calculate line direction to determine text placement
 		const deltaLat = endPoint.lat - startPoint.lat;
-		const deltaLng = endPoint.lng - startPoint.lng;
+		const deltaLng1 = (endPoint.lng - startPoint.lng) * Math.PI / 180;
+		const deltaLng2 = ((endPoint.lng+180) + (startPoint.lng-180)) * Math.PI / 180;
+		const deltaLng = Math.min(deltaLng1,deltaLng2);
+		//const deltaLng = endPoint.lng - startPoint.lng;
 		const lineAngle = Math.atan2(deltaLat, deltaLng) * 180 / Math.PI;
 
 		// If line is roughly vertical (-120° to -60° or 60° to 120°), place text to the right

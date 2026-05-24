@@ -7,7 +7,12 @@ export function calculateCourse(start: LatLng, end: LatLng): number {
 	// Calculate bearing using spherical trigonometry
 	const lat1 = start.lat * Math.PI / 180;
 	const lat2 = end.lat * Math.PI / 180;
-	const deltaLon = (end.lng - start.lng) * Math.PI / 180;
+	//allow for 180 deg
+	const deltaLon1 = (end.lng - start.lng) * Math.PI / 180;
+	const deltaLon2 = ((end.lng+180) + (start.lng-180)) * Math.PI / 180;
+	
+	const deltaLon = Math.min(deltaLon1,deltaLon2);
+	//const deltaLon = (end.lng - start.lng) * Math.PI / 180;
 
 	const y = Math.sin(deltaLon) * Math.cos(lat2);
 	const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
